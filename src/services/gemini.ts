@@ -1,18 +1,31 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let ai: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!ai) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not defined in environment variables.");
+    }
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
+}
 
 export async function* streamChat(messages: { role: 'user' | 'model', content: string }[]) {
   const model = "gemini-3-flash-preview";
   
-  // Convert roles for Gemini
-  const contents = messages.map(m => ({
-    role: m.role,
-    parts: [{ text: m.content }]
-  }));
-
   try {
-    const stream = await ai.models.generateContentStream({
+    const genAI = getAI();
+    
+    // Convert roles for Gemini
+    const contents = messages.map(m => ({
+      role: m.role,
+      parts: [{ text: m.content }]
+    }));
+
+    const stream = await genAI.models.generateContentStream({
       model,
       contents,
       config: {
