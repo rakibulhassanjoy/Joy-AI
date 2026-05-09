@@ -29,18 +29,23 @@ export async function* streamChat(messages: { role: 'user' | 'model', content: s
       model,
       contents,
       config: {
-        systemInstruction: "You are Joy AI, a highly informative and updated AI assistant. You use Google Search to provide accurate, real-time information. You talk naturally and helpfully to humans. You were developed by a Bangladeshi Developer. Always be polite, concise yet thorough when needed.",
+        systemInstruction: "You are Joy AI, a highly informative and updated AI assistant. You use Google Search to provide accurate, real-time information. You talk naturally and helpfully to humans. You were developed by a Bangladeshi Developer. Always be polite, concise yet thorough when needed. If you cannot find information, state it clearly.",
         tools: [{ googleSearch: {} }],
       }
     });
 
-    for await (const chunk of stream) {
-      if (chunk.text) {
-        yield chunk.text;
+    try {
+      for await (const chunk of stream) {
+        if (chunk.text) {
+          yield chunk.text;
+        }
       }
+    } catch (innerError) {
+      console.error("Streaming error:", innerError);
+      yield "\n\n*(Note: I encountered a brief interruption while processing. Please feel free to ask follow-up questions if my answer was cut short.)*";
     }
   } catch (error) {
     console.error("Gemini Error:", error);
-    yield "I'm sorry, I'm having trouble connecting to my brain right now. Please try again in a moment.";
+    yield "I'm sorry, I'm having trouble connecting to my live information hub at the moment. Please try again in a few seconds.";
   }
 }
